@@ -1,24 +1,37 @@
+%% Assuming:
+% Square patches
+% Square feature maps
+
 clear
-load('MNISTPatches4x410KSimulationResults.mat')
+load('MNISTPatches5x510K576patchesWeightsPriors.mat')
 load('MNIST.mat')
-xTestTemp=trainImages;
+
+noRows=28;
+noCols=28;
+
+indices=(find(trainLabels==0 | trainLabels==1 | trainLabels==2 | trainLabels==3 | trainLabels==4));
+noDataPoints=length(indices);
+xTestTemp=trainImages(:,indices);
 xTestTemp(find(xTestTemp))=1;
-xTestTemp=reshape(xTestTemp, 28, 28, 60000);
+xTestTemp=reshape(xTestTemp, noRows, noCols, noDataPoints);
 epsilon=1e-10;
 
-xData2=zeros(11, 49, 60000);
+patchSize=size(muAll, 1)^0.5;
+K1=size(piAll, 1);            %Number of feature maps: 11
+N1=size(muAll, 3);              %Number of neurons per feature map: 576
+N1sqrt=N1^0.5;
+xData2=zeros(K1, N1, noDataPoints);
 
 
-for iImg=1:60000
+for iImg=1:noDataPoints
 tic
 iImg
-for nPatch=1:49
-    iPatch=(ceil(nPatch/7)-1)*4+1;
-    jPatch=((mod(nPatch, 7)==0)*7+(mod(nPatch, 7)~=0)*(mod(nPatch, 7))-1)*4+1;
+for nPatch=1:N1
+    iPatch=ceil(nPatch/N1sqrt);
+    jPatch=((mod(nPatch, N1sqrt)==0)*N1sqrt+(mod(nPatch, N1sqrt)~=0)*(mod(nPatch, N1sqrt)));
     %muAll(:,:,nPatch)
     %reshape(xTestTemp(iPatch:iPatch+3, jPatch:jPatch+3, 1), 16, 1)
-    temp1(1:10, nPatch)=muAll(:,:,nPatch)'*reshape(xTestTemp(iPatch:iPatch+3, jPatch:jPatch+3, iImg), 16, 1);
-    temp2(1:10, nPatch)=log10(piAll(:,nPatch))+log10(muAll(:,:,nPatch)'+epsilon)*reshape(xTestTemp(iPatch:iPatch+3, jPatch:jPatch+3, iImg), 16, 1)+log10(1+epsilon-muAll(:,:,nPatch)')*(1-reshape(xTestTemp(iPatch:iPatch+3, jPatch:jPatch+3, iImg), 16, 1));
+    temp2(1:(K1), nPatch)=log10(piAll(:,nPatch))+log10(muAll(:,:,nPatch)'+epsilon)*reshape(xTestTemp(iPatch:iPatch+patchSize-1, jPatch:jPatch+patchSize-1, iImg), patchSize*patchSize, 1)+log10(1+epsilon-muAll(:,:,nPatch)')*(1-reshape(xTestTemp(iPatch:iPatch+patchSize-1, jPatch:jPatch+patchSize-1, iImg), patchSize*patchSize, 1));
 end
 
 normFactor=log10(sum(10.^(temp2+30), 2))-30;
@@ -27,31 +40,31 @@ temp2norm=temp2-normMatrix;
 temp2fin=10.^(temp2norm);
 
 
-[temp1Val, temp1Ind]=max(temp1);
 [temp2Val, temp2Ind]=max(temp2fin);
 
-for nPatch=1:49
-    iPatch=(ceil(nPatch/7)-1)*4+1;
-    jPatch=((mod(nPatch, 7)==0)*7+(mod(nPatch, 7)~=0)*(mod(nPatch, 7))-1)*4+1;
-    if(sum(reshape(xTestTemp(iPatch:iPatch+3, jPatch:jPatch+3, iImg), 16, 1))==0)
-        xData2(11, nPatch, iImg)=1;
-    else
+for nPatch=1:N1
+    iPatch=ceil(nPatch/N1sqrt);
+    jPatch=((mod(nPatch, N1sqrt)==0)*N1sqrt+(mod(nPatch, N1sqrt)~=0)*(mod(nPatch, N1sqrt)));
+    %if(sum(reshape(xTestTemp(iPatch:iPatch+patchSize-1, jPatch:jPatch+patchSize-1, iImg), patchSize*patchSize, 1))==0) %This is incorrect
+     %   xData2(K1, nPatch, iImg)=1;
+    %else
         xData2(temp2Ind(nPatch), nPatch, iImg)=1;
-    end
+    %end
 end
 
 recon=zeros(28, 28);
 %Reconstruct with patches
-for nPatch=1:49
-    iPatch=(ceil(nPatch/7)-1)*4+1;
-    jPatch=((mod(nPatch, 7)==0)*7+(mod(nPatch, 7)~=0)*(mod(nPatch, 7))-1)*4+1;
+for nPatch=1:N1
+    iPatch=ceil(nPatch/N1sqrt);
+    jPatch=((mod(nPatch, N1sqrt)==0)*N1sqrt+(mod(nPatch, N1sqrt)~=0)*(mod(nPatch, N1sqrt)));
     if(temp2Val(nPatch)~=0)
-        recon(iPatch:iPatch+3, jPatch:jPatch+3)=reshape(muAll(:,temp2Ind(nPatch), nPatch), 4, 4);
+        recon(iPatch:iPatch+patchSize-1, jPatch:jPatch+patchSize-1)=reshape(muAll(:,temp2Ind(nPatch), nPatch), patchSize, patchSize);
     end
 end
 toc
 end
 
+xData2=permute(xData2, [2 1 3]);
 
 figure(1)
 ax1=subplot(1, 2, 1);
