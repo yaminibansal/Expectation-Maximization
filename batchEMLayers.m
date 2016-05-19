@@ -53,8 +53,14 @@ for iPatch=1:noRows-noRowsPatch+1
         %% Initialization
         pi_k=rand(Kout,1);                       %pi needs to be a valid probability vector such \sum pi = 1
         pi_k=pi_k/sum(pi_k);
-        mu=rand(noRowsPatch, noColsPatch, Kin-1, Kout);
-        mu(:,:,Kin,:)=1-sum(mu, 3);              %It is defined like this because in dim3, \sum mu = 1
+        mu=rand(noRowsPatch, noColsPatch, Kin, Kout);
+        %Normalizing mu across dim 3
+        mu=permute(mu, [1 2 4 3]);
+        mu=reshape(mu, noRowsPatch*noColsPatch*Kout, Kin);
+        mu=mu./(sum(mu, 2)*ones(1, Kin));
+        mu=reshape(mu, noRowsPatch, noColsPatch, Kout, Kin);
+        mu=permute(mu, [1 2 4 3]);
+        
         r=zeros(noDataPoints, Kout);
         logr=zeros(noDataPoints, Kout);
         Q=0;
@@ -66,6 +72,7 @@ for iPatch=1:noRows-noRowsPatch+1
         
         for iter=1:noMaxIters
             % E step:
+            iter
             for i=1:noDataPoints
                 for k=1:Kout
                     xPatch=xData(:,:,:,i);
@@ -86,7 +93,7 @@ for iPatch=1:noRows-noRowsPatch+1
             mu=reshape(mu_temp./(ones(noRowsPatch*noColsPatch*Kin,1)*sum(r, 1)), noRowsPatch, noColsPatch, Kin, Kout);
 
             %Break condition
-            Q(iter)=sum(r*log(pi_k'))+sum(sum(r*(reshape(xData, noRowsPatch*noColsPatch*Kin, noDataPoints)'*reshape(log(mu), noRowsPatch*noColsPatch*Kin, Kout))'));
+            Q(iter)=sum(r*log(pi_k'))+sum(sum(r'*(reshape(xData, noRowsPatch*noColsPatch*Kin, noDataPoints)'*reshape(log(mu+epsilon), noRowsPatch*noColsPatch*Kin, Kout))));
             if(iter>1 && abs((Q(iter)-Q(iter-1))/Q(iter-1))<0.001)
                 break
             end
