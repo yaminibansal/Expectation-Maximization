@@ -2,7 +2,7 @@
 clear all
 
 %% Network Parameters
-K=30;
+K=10;
 noRows=4;
 noCols=4;
 noPixels=noRows*noCols;
@@ -20,13 +20,13 @@ xTest=testImages;
 xTest(find(xTest))=1;
 noTestPoints=size(xTest, 2);
 
-noRuns=1;
+noRuns=10;
 piVals=zeros(K, noRuns);
 muVals=zeros(noPixels, K, noRuns);
 outVals=zeros(noTestPoints, noRuns);
 
 for run=1:noRuns
-    
+    run
     %% Initialization
     pi_k=rand(K,1);                       %pi needs to be a valid probability vector such \sum pi = 1
     pi_k=pi_k/sum(pi_k);
@@ -49,7 +49,7 @@ for run=1:noRuns
     
     for iter=1:noMaxIters
         tic
-        %iter
+        iter
         % E-step
         for i=1:noDataPoints
             for k=1:K
@@ -78,7 +78,7 @@ for run=1:noRuns
         end
         mu=reshape(mu_temp./(ones(noPixels,1)*sum(r, 1)), noRows, noCols, K);
         
-        Q(iter)=sum(r*log(pi_k')+sum(xData'*reshape(log(mu+epsilon), noRows*noCols, K)+(1-xData')*reshape(log(1+epsilon-mu), noRows*noCols, K),2));
+        Q(iter)=sum(r*log(pi_k'))+sum(sum(r'*(xData'*reshape(log(mu+epsilon), noRows*noCols, K)+(1-xData')*reshape(log(1+epsilon-mu), noRows*noCols, K)),2));
         
         %TODO: Add a break condition
         if(iter>1 && abs((Q(iter)-Q(iter-1))/Q(iter-1))<0.001)
@@ -89,38 +89,13 @@ for run=1:noRuns
         toc
     end
     
-    %% Testing
-    
-    
-%     testDist=(normc(reshape(mu, noPixels, K))'*normc(xTest));
-%     [mVal, outLabel]=max(testDist);
-%     outLabel=outLabel';
-%     
-%     piVals(:,run)=pi_k;
-%     muVals(:,:,run)=reshape(mu, noPixels,K);
-%     outVals(:,run)=outLabel;
-    
+     piVals(:,run)=pi_k;
+     muVals(:,:,run)=reshape(mu, noPixels,K);    
 end
 
 toc
 
-figure(1)
-for i=1:K
-subplot(6, 5, i)
-imagesc(mu(:,:,i))
-end
-
-
-%
-% subplot(2, 2, 1)
-% imagesc(mu(:,:,1))
-% subplot(2, 2, 2)
-% imagesc(mu(:,:,2))
-% subplot(2, 2, 3)
-% imagesc(mu(:,:,3))
-% subplot(2, 2, 4)
-% imagesc(mu(:,:,4))
-colormap gray
+muPlotter(muVals, piVals, noRows, noCols, K, 1, 2, 5 )
 
 
 
