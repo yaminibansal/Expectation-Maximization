@@ -2,11 +2,11 @@
 clear all
 
 %% Network Parameters
-K=10;                                   % Fan-out for each patch neuron
+K=30;                                   % Fan-out for each patch neuron
 noRows=28;                              % No. of rows in input image
 noCols=28;                              % No. of cols in input image
-noRowsPatch=4;                          % No. of rows in input patch
-noColsPatch=4;                          % No. of cols in input patch
+noRowsPatch=7;                          % No. of rows in input patch
+noColsPatch=7;                          % No. of cols in input patch
 noPixels=noRows*noCols;
 noPatches=(noRows/noRowsPatch)*(noCols/noColsPatch);
 
@@ -20,8 +20,8 @@ count=0;
 muAll=zeros(noRowsPatch*noColsPatch, K, noPatches);
 piAll=zeros(K,noPatches);
 
-for iPatch=1:4:noRows-1
-    for jPatch=1:4:noCols-1
+for iPatch=1:7:noRows-1
+    for jPatch=1:7:noCols-1
         
         iPatch, jPatch
         
@@ -93,7 +93,7 @@ for iPatch=1:4:noRows-1
                 end
                 mu=reshape(mu_temp./(ones(noRowsPatch*noColsPatch,1)*sum(r, 1)), noRowsPatch, noColsPatch, K);
                 
-                Q(iter)=sum(r*log(pi_k')+sum(xData'*reshape(log(mu+epsilon), noRowsPatch*noColsPatch, K)+(1-xData')*reshape(log(1+epsilon-mu), noRowsPatch*noColsPatch, K),2));
+                Q(iter)=sum(r*log(pi_k'))+sum(sum(r'*(xData'*reshape(log(mu+epsilon), noRowsPatch*noColsPatch, K)+(1-xData')*reshape(log(1+epsilon-mu), noRowsPatch*noColsPatch, K)),2));
                 
                 %TODO: Add a break condition
                 if(iter>1 && abs((Q(iter)-Q(iter-1))/Q(iter-1))<0.001)
@@ -122,28 +122,28 @@ for iPatch=1:4:noRows-1
 end
 
 toc
-
-figure(1)
-subplot(2, 5, 1)
-imagesc(mu(:,:,1))
-subplot(2, 5, 2)
-imagesc(mu(:,:,2))
-subplot(2, 5, 3)
-imagesc(mu(:,:,3))
-subplot(2, 5, 4)
-imagesc(mu(:,:,4))
-subplot(2, 5, 5)
-imagesc(mu(:,:,5))
-subplot(2, 5, 6)
-imagesc(mu(:,:,6))
-subplot(2, 5, 7)
-imagesc(mu(:,:,7))
-subplot(2, 5, 8)
-imagesc(mu(:,:,8))
-subplot(2, 5, 9)
-imagesc(mu(:,:,9))
-subplot(2, 5, 10)
-imagesc(mu(:,:,10))
+% 
+% figure(1)
+% subplot(2, 5, 1)
+% imagesc(mu(:,:,1))
+% subplot(2, 5, 2)
+% imagesc(mu(:,:,2))
+% subplot(2, 5, 3)
+% imagesc(mu(:,:,3))
+% subplot(2, 5, 4)
+% imagesc(mu(:,:,4))
+% subplot(2, 5, 5)
+% imagesc(mu(:,:,5))
+% subplot(2, 5, 6)
+% imagesc(mu(:,:,6))
+% subplot(2, 5, 7)
+% imagesc(mu(:,:,7))
+% subplot(2, 5, 8)
+% imagesc(mu(:,:,8))
+% subplot(2, 5, 9)
+% imagesc(mu(:,:,9))
+% subplot(2, 5, 10)
+% imagesc(mu(:,:,10))
 %
 % subplot(2, 2, 1)
 % imagesc(mu(:,:,1))
@@ -153,7 +153,7 @@ imagesc(mu(:,:,10))
 % imagesc(mu(:,:,3))
 % subplot(2, 2, 4)
 % imagesc(mu(:,:,4))
-colormap gray
+% colormap gray
 
 
 
