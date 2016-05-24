@@ -2,9 +2,9 @@
 clear all
 
 %% Network Parameters
-K=10;
-noRows=4;
-noCols=4;
+K=30;
+noRows=7;
+noCols=7;
 noPixels=noRows*noCols;
 
 % MNIST
@@ -13,14 +13,14 @@ load('MNIST.mat');
 noDataPoints=size(trainImages,2);%length(indices);
 %xData=trainImages;%trainImages(:,indices);
 xDataTemp=reshape(trainImages, 28, 28, noDataPoints);%trainImages(:,indices);
-xData=reshape(xDataTemp(17:20, 13:16,:), noRows*noCols, noDataPoints);
+xData=reshape(xDataTemp(15:21, 15:21,:), noRows*noCols, noDataPoints);
 yData=trainLabels;%trainLabels(indices);
 xData(find(xData))=1;
 xTest=testImages;
 xTest(find(xTest))=1;
 noTestPoints=size(xTest, 2);
 
-noRuns=10;
+noRuns=5;
 piVals=zeros(K, noRuns);
 muVals=zeros(noPixels, K, noRuns);
 outVals=zeros(noTestPoints, noRuns);
