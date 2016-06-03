@@ -1,4 +1,4 @@
-function[muAll, piAll, noRowsOut, noColsOut]=batchEMLayers(x, Kin, noRows, noCols, noRowsPatch, noColsPatch, Kout)
+function[muAll, piAll, noRowsOut, noColsOut, Q]=batchEMLayers(x, Kin, noRows, noCols, noRowsPatch, noColsPatch, Kout)
 
 %% This function performs Expectation Maximization with a Multinolli model
 %% Inputs:
@@ -47,11 +47,12 @@ count=0;
 for iPatch=1:noRows-noRowsPatch+1
     for jPatch=1:noCols-noColsPatch+1
         tic
+        iPatch, jPatch
         count=count+1;
         xData=xTemp(iPatch:iPatch+noRowsPatch-1, jPatch:jPatch+noColsPatch-1,:,:);
         
         %% Initialization
-        pi_k=rand(Kout,1);                       %pi needs to be a valid probability vector such \sum pi = 1
+        pi_k=rand(1,Kout);                       %pi needs to be a valid probability vector such \sum pi = 1
         pi_k=pi_k/sum(pi_k);
         mu=rand(noRowsPatch, noColsPatch, Kin, Kout);
         %Normalizing mu across dim 3
@@ -63,23 +64,24 @@ for iPatch=1:noRows-noRowsPatch+1
         
         r=zeros(noDataPoints, Kout);
         logr=zeros(noDataPoints, Kout);
-        Q=0;
+        %Q=0;
         
         %% Simulation parameters
         noMaxIters=100;
         iter=0;
-        epsilon=1e-10;                      %Is added to mu in places where we take log to prevent NaN
+        epsilon=1e-50;                      %Is added to mu in places where we take log to prevent NaN
         
         for iter=1:noMaxIters
             % E step:
-            iter
-            for i=1:noDataPoints
-                for k=1:Kout
-                    xPatch=xData(:,:,:,i);
-                    %Update responsibility without normalization
-                    logr(i,k)=log10(pi_k(k))+sum(sum(sum(xPatch.*log10(mu(:, :, :, k)+epsilon))));
-                end
-            end
+%            iter
+%             for i=1:noDataPoints
+%                 for k=1:Kout
+%                     xPatch=xData(:,:,:,i);
+%                     %Update responsibility without normalization
+%                     logr(i,k)=log10(pi_k(k))+sum(sum(sum(xPatch.*log10(mu(:, :, :, k)+epsilon))));
+%                 end
+%             end
+            logr=ones(noDataPoints, 1)*log10(pi_k)+reshape(xData, noRowsPatch*noColsPatch*Kin, noDataPoints)'*log10(reshape(mu, noRowsPatch*noColsPatch*Kin, Kout)+epsilon);
             
             % Normalize r
             normFactor=log10(sum(10.^(logr+30), 2))-30;
@@ -93,10 +95,11 @@ for iPatch=1:noRows-noRowsPatch+1
             mu=reshape(mu_temp./(ones(noRowsPatch*noColsPatch*Kin,1)*sum(r, 1)), noRowsPatch, noColsPatch, Kin, Kout);
 
             %Break condition
-            Q(iter)=sum(r*log(pi_k'))+sum(sum(r'*(reshape(xData, noRowsPatch*noColsPatch*Kin, noDataPoints)'*reshape(log(mu+epsilon), noRowsPatch*noColsPatch*Kin, Kout))));
-            if(iter>1 && abs((Q(iter)-Q(iter-1))/Q(iter-1))<0.001)
-                break
-            end
+            Q(count, iter)=sum(r*log(pi_k'))+sum(sum(r'*(reshape(xData, noRowsPatch*noColsPatch*Kin, noDataPoints)'*reshape(log(mu+epsilon), noRowsPatch*noColsPatch*Kin, Kout))));
+%             if(iter>1 && abs((Q(count, iter)-Q(count, iter-1))/Q(count, iter-1))<0.001)
+%                 break
+%             end
+            toc
             
         end
         
@@ -104,10 +107,10 @@ for iPatch=1:noRows-noRowsPatch+1
         piAll(:, count)=pi_k;
         iterConv(count)=iter;
         
-        toc
+        
     end
 end
-
+toc
 
 
 
