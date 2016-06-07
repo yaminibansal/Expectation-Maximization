@@ -1,4 +1,4 @@
-function[muAll, piAll, noRowsOut, noColsOut, Q]=batchEMLayers(x, Kin, noRows, noCols, noRowsPatch, noColsPatch, Kout)
+function[muAll, piAll, noRowsOut, noColsOut, Q]=batchEMLayersNoOverlap(x, Kin, noRows, noCols, noRowsPatch, noColsPatch, Kout)
 
 %% This function performs Expectation Maximization with a Multinolli model
 %% Inputs:
@@ -17,21 +17,21 @@ function[muAll, piAll, noRowsOut, noColsOut, Q]=batchEMLayers(x, Kin, noRows, no
 noDataPoints=size(x, 3);
 noPixels=noRows*noCols;
 
-% If non-overlapping patches
-% if(ceil(noRows/noRowsPatch)~=floor(noRows/noRowsPatch))
-%     error('No. of rows in patch doesnt divide total no. of rows.')
-% else
-%     noRowsOut=(noRows/noRowsPatch);
-% end
-%
-% if(ceil(noCols/noColsPatch)~=floor(noCols/noColsPatch))
-%     error('No. of columns in patch doesnt divide total no. of columns.')
-% else
-%     noColsOut=(noCols/noColsPatch);
-% end
+%If non-overlapping patches
+if(ceil(noRows/noRowsPatch)~=floor(noRows/noRowsPatch))
+    error('No. of rows in patch doesnt divide total no. of rows.')
+else
+    noRowsOut=(noRows/noRowsPatch);
+end
 
-noRowsOut=(noRows-noRowsPatch+1);
-noColsOut=(noCols-noColsPatch+1);
+if(ceil(noCols/noColsPatch)~=floor(noCols/noColsPatch))
+    error('No. of columns in patch doesnt divide total no. of columns.')
+else
+    noColsOut=(noCols/noColsPatch);
+end
+
+% noRowsOut=(noRows-noRowsPatch+1);
+% noColsOut=(noCols-noColsPatch+1);
 
 noPatches=noRowsOut*noColsOut;
 
@@ -44,8 +44,8 @@ xTemp=reshape(x, noRows, noCols, Kin, noDataPoints);
 
 % Moving patchwise
 count=0;
-for iPatch=1:noRows-noRowsPatch+1
-    for jPatch=1:noCols-noColsPatch+1
+for iPatch=1:noRowsPatch:noRows-1
+    for jPatch=1:noColsPatch:noCols-1
         tic
         iPatch, jPatch
         count=count+1;
